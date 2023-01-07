@@ -20,6 +20,7 @@ import okhttp3.Request
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
+import javax.inject.Qualifier
 import javax.inject.Singleton
 
 @Module
@@ -55,8 +56,8 @@ class MainModule {
 
     @Singleton
     @Provides
-    fun provideRepository(service: DataSource, caroutinedispatchers: CoroutineDispatcher): KingDefaultRepo {
-        return KingDefaultRepo()
+    fun provideRepository(service: DataSource, coroutinedispatchers: CoroutineDispatcher): KingDefaultRepo {
+        return KingDefaultRepo(service,coroutinedispatchers)
     }
 
     @Singleton
@@ -100,7 +101,32 @@ class MainModule {
         }
     }
 
+//
+//    @Provides
+//    fun providesDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
+//
+//
+//    @Provides
+//    fun providesIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+//
+//
+//    @Provides
+//    fun providesMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
+
+
+
     companion object {
         private const val BASE_URL = "https://findfalcone.herokuapp.com/planets"
     }
 }
+@Retention(AnnotationRetention.BINARY)
+@Qualifier
+annotation class DefaultDispatcher
+
+@Retention(AnnotationRetention.BINARY)
+@Qualifier
+annotation class IoDispatcher
+
+@Retention(AnnotationRetention.BINARY)
+@Qualifier
+annotation class MainDispatcher
