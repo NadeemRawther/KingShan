@@ -1,10 +1,10 @@
 package com.nads.kingshan.data.repo
 
-import com.nads.kingshan.data.model.FindResponse
-import com.nads.kingshan.data.model.PlanetModel
-import com.nads.kingshan.data.model.VehicleModel
+import com.nads.kingshan.data.model.*
 import com.nads.kingshan.data.remote.DataSource
+import com.nads.kingshan.di.ApplicationScope
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import okhttp3.RequestBody
 import javax.inject.Inject
@@ -12,22 +12,23 @@ import javax.inject.Singleton
 
 @Singleton
 class KingDefaultRepo @Inject constructor(
-private val apiSource:DataSource,
-private val dispatcher: CoroutineDispatcher = Dispatchers.IO):KingShanRepos {
-    override fun getPlanets(): List<PlanetModel> {
-        TODO("Not yet implemented")
+    private val apiSource:DataSource,
+    @ApplicationScope private val externalScope: CoroutineScope):KingShanRepos {
+
+    override suspend fun getPlanets(): Result<List<PlanetModel>> {
+       return Result.success(apiSource.getPlanet())
     }
 
-    override fun getVehicle(): List<VehicleModel> {
-        TODO("Not yet implemented")
+    override suspend fun getVehicle(): Result<List<VehicleModel>> {
+       return Result.success(apiSource.getVehicle())
     }
 
-    override fun getToken(): String {
-        TODO("Not yet implemented")
+    override suspend fun getToken(): Result<TokenModel> {
+        return Result.success(apiSource.getToken())
     }
 
-    override fun find(findRequest: RequestBody): FindResponse {
-        TODO("Not yet implemented")
+    override suspend fun find(findRequest:FindRequest): Result<FindResponse> {
+        return Result.success(apiSource.find(findRequest))
     }
 
 

@@ -8,12 +8,12 @@ import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
 import com.nads.kingshan.data.repo.KingDefaultRepo
 import com.nads.kingshan.data.remote.DataSource
+import com.nads.kingshan.data.repo.KingShanRepos
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.*
 import okhttp3.Interceptor
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -22,6 +22,11 @@ import retrofit2.converter.gson.GsonConverterFactory
 import java.io.IOException
 import javax.inject.Qualifier
 import javax.inject.Singleton
+
+@Retention(AnnotationRetention.RUNTIME)
+@Qualifier
+annotation class ApplicationScope
+
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -32,10 +37,9 @@ class MainModule {
         val client: OkHttpClient = OkHttpClient.Builder()
             .addInterceptor(Interceptor.invoke { chain: Interceptor.Chain ->
                 val orginal: Request = chain.request()
-                val request = orginal.newBuilder().method(
-                    orginal.method,
-                    orginal.body
-                ).build()
+                val request = orginal.newBuilder()
+                    .method(orginal.method,orginal.body)
+                    .build()
                 chain.proceed(request)
             }).build()
         return client
@@ -56,15 +60,22 @@ class MainModule {
 
     @Singleton
     @Provides
-    fun provideRepository(service: DataSource, coroutinedispatchers: CoroutineDispatcher): KingDefaultRepo {
-        return KingDefaultRepo(service,coroutinedispatchers)
+    fun provideRepository(service: DataSource,
+    @ApplicationScope coroutineScope: CoroutineScope): KingShanRepos {
+        return KingDefaultRepo(service,coroutineScope)
     }
 
+//    @Singleton
+//    @Provides
+//    fun provideCoroutine(): CoroutineDispatcher {
+//        return Dispatchers.IO
+//    }
     @Singleton
     @Provides
-    fun provideCoroutine(): CoroutineDispatcher {
-        return Dispatchers.IO
-    }
+    @ApplicationScope
+    fun providesCoroutineScope(
+        @DefaultDispatcher defaultDispatcher: CoroutineDispatcher
+    ): CoroutineScope = CoroutineScope(SupervisorJob() + defaultDispatcher)
 
 
 //    @Singleton
@@ -75,6 +86,7 @@ class MainModule {
 //            LandFindDataBase::class.java, "Lands.db"
 //        ).build()
 //    }
+
 
 
 
@@ -101,24 +113,30 @@ class MainModule {
         }
     }
 
-//
-//    @Provides
-//    fun providesDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
-//
-//
-//    @Provides
-//    fun providesIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
-//
-//
-//    @Provides
-//    fun providesMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
 
+    @DefaultDispatcher
+    @Provides
+    fun providesDefaultDispatcher(): CoroutineDispatcher = Dispatchers.Default
+
+    @IoDispatcher
+    @Provides
+    fun providesIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+
+    @MainDispatcher
+    @Provides
+    fun providesMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
+
+    @MainImmediateDispatcher
+    @Provides
+    fun providesMainImmediateDispatcher(): CoroutineDispatcher = Dispatchers.Main.immediate
 
 
     companion object {
-        private const val BASE_URL = "https://findfalcone.herokuapp.com/planets"
+        private const val BASE_URL = "https://findfalcone.herokuapp.com/"
     }
 }
+
+
 @Retention(AnnotationRetention.BINARY)
 @Qualifier
 annotation class DefaultDispatcher
@@ -130,3 +148,7 @@ annotation class IoDispatcher
 @Retention(AnnotationRetention.BINARY)
 @Qualifier
 annotation class MainDispatcher
+
+@Retention(AnnotationRetention.BINARY)
+@Qualifier
+annotation class MainImmediateDispatcher

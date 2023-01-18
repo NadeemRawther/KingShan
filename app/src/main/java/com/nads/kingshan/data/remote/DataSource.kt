@@ -1,8 +1,6 @@
 package com.nads.kingshan.data.remote
 
-import com.nads.kingshan.data.model.FindResponse
-import com.nads.kingshan.data.model.PlanetModel
-import com.nads.kingshan.data.model.VehicleModel
+import com.nads.kingshan.data.model.*
 import okhttp3.RequestBody
 import retrofit2.http.*
 
@@ -13,11 +11,14 @@ interface DataSource {
     @GET("vehicles")
     suspend fun getVehicle():List<VehicleModel>
 
-    @POST("token")
-    suspend fun getToken():String
 
+    @Headers("Accept:application/json","Content-Type:application/json")
+    @POST("token")
+    suspend fun getToken():TokenModel
+
+    @Headers("Accept:application/json","Content-Type:application/json")
     @POST("find")
-    suspend fun find(@Body findRequest:RequestBody):FindResponse
+    suspend fun find(@Body findRequest:FindRequest):FindResponse
 
 
 }
