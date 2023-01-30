@@ -16,6 +16,8 @@ Clone the repository to your local machine using git clone https://github.com/Na
 Open the project in Android Studio
 Connect an Android device or start an emulator
 Click "Run" in Android Studio to install the application on the device/emulator
+And For the folder users if you have the file unzip the file and use android studio to  open the folder 
+and you can install the project and check 
 
 ## **Usage**
 First we can see the page where there is List of planets are given in the form of cards
