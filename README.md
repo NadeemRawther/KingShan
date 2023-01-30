@@ -1,6 +1,6 @@
-### *** King Shan Android Application ReadMe ***
+### ***King Shan Android Application ReadMe***
 
-## ** Introduction **
+## **Introduction**
 This is the source code for an Android application, developed using Java and the Android Studio platform. The purpose of this application is [INSERT PURPOSE HERE].
 
 ## **Requirements**
