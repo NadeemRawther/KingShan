@@ -33,7 +33,7 @@ import com.nads.kingshan.ui.main.MainViewModel
 
 @Composable
 fun VehicleCard(
-      navController: NavHostController,
+
       planetlist: PlanetModel,
       vehiclelist: State<List<VehicleModel>>,
       index: Int,
@@ -121,7 +121,12 @@ fun ProgressBars(enable:Boolean) {
 
             }
       }
+}
 
+@Preview
+@Composable
+fun progressprev() {
+      ProgressBars(enable = true)
 
 }
 
@@ -129,14 +134,11 @@ fun ProgressBars(enable:Boolean) {
 @Composable
 fun SpinnerSample(
       list: List<MyData>,
-     // preselected: MyData,
-//      onSelectionChanged: (myData: MyData,myDataold:MyData,planetlist:PlanetModel) -> Unit,
       modifier: Modifier = Modifier,
       viewModel: MainViewModel,
       planetlist: PlanetModel
 ) {
 
-//      val myData = viewModel.vehiclelistState.collectAsState()
 
    var selected by remember { mutableStateOf(list[0]) }
       var expanded by remember { mutableStateOf(false) }
@@ -167,14 +169,16 @@ fun SpinnerSample(
                         modifier = Modifier.wrapContentWidth()   // delete this modifier and use .wrapContentWidth() if you would like to wrap the dropdown menu around the content
                   ) {
                         list.forEach { listEntry ->
-                            if (listEntry.distance > planetlist.distance ) {
+                            if (listEntry.distance >= planetlist.distance ) {
                               DropdownMenuItem(
                                     enabled = listEntry.enable,
                                     onClick = {
                                           viewModel.changeEnable(enable = false,index= list.indexOf(listEntry),
                                                 oldIndex = list.indexOf(selected), planetModel = planetlist )
-                                         // onSelectionChanged(listEntry,selected,planetlist)
-                                          selected = listEntry
+                                          if (!viewModel.error.value){
+                                                selected = listEntry
+                                          }
+
                                           expanded = false
 
                                     },
@@ -208,5 +212,6 @@ data class MyData (
       val distance: Int,
       val name: String,
       var enable:Boolean=false,
-      var id:Int
+      var id:Int,
+      var speed:Int
 )

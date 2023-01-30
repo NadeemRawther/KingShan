@@ -2,6 +2,7 @@ package com.nads.kingshan.data.remote
 
 import com.nads.kingshan.data.model.*
 import okhttp3.RequestBody
+import okhttp3.ResponseBody
 import retrofit2.http.*
 
 interface DataSource {

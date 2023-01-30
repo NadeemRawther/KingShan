@@ -6,6 +6,8 @@ import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.google.gson.stream.JsonWriter
+import com.nads.kingshan.data.model.PlanetListTypeAdapter
+import com.nads.kingshan.data.model.VehicleListTypeAdapter
 import com.nads.kingshan.data.repo.KingDefaultRepo
 import com.nads.kingshan.data.remote.DataSource
 import com.nads.kingshan.data.repo.KingShanRepos
@@ -48,8 +50,9 @@ class MainModule {
     @Provides
     fun providesRetrofitClient(): DataSource {
         val gson = GsonBuilder()
-            .registerTypeAdapter(Int::class.javaPrimitiveType, IntTypeAdapter())
-            .registerTypeAdapter(Int::class.java, IntTypeAdapter()).create()
+            .registerTypeAdapter(VehicleListTypeAdapter::class.java, VehicleListTypeAdapter())
+            .registerTypeAdapter(PlanetListTypeAdapter::class.java, PlanetListTypeAdapter())
+            .create()
         return Retrofit.Builder()
             .baseUrl(BASE_URL)
             .client(providesOkHttpClient())
@@ -90,28 +93,6 @@ class MainModule {
 
 
 
-    class IntTypeAdapter : TypeAdapter<Number?>() {
-        @Throws(IOException::class)
-        override fun write(out: JsonWriter, value: Number?) {
-            out.value(value)
-        }
-
-        @Throws(IOException::class)
-        override fun read(`in`: JsonReader): Number? {
-            if (`in`.peek() == JsonToken.NULL) {
-                `in`.nextNull()
-                return null
-            }
-            return try {
-                val result = `in`.nextString()
-                if ("" == result) {
-                    null
-                } else result.toInt()
-            } catch (e: NumberFormatException) {
-                throw JsonSyntaxException(e)
-            }
-        }
-    }
 
 
     @DefaultDispatcher

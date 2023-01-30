@@ -1,5 +1,6 @@
 package com.nads.kingshan.ui
 
+import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -14,48 +15,52 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material3.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.testTag
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.nads.kingshan.data.model.FindRequest
+import com.nads.kingshan.ui.kingshanfail.KingShanFail
+import com.nads.kingshan.ui.kingshanwin.KingShanWin
 import com.nads.kingshan.ui.main.MainViewModel
 import com.nads.kingshan.ui.playground.PlayNavigation
 import com.nads.kingshan.ui.theme.KingShanTheme
 import com.nads.kingshan.ui.vehicle.ProgressBars
 import com.nads.kingshan.ui.vehicle.VehicleCard
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3WindowSizeClassApi::class)
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
 
     private val viewModel: MainViewModel by viewModels()
-
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-
+            val snackbarHostState = remember { SnackbarHostState() }
+            val scope = rememberCoroutineScope()
             KingShanTheme {
                 val scrollviewBehavior = TopAppBarDefaults.pinnedScrollBehavior()
                 val drawerState = rememberDrawerState(DrawerValue.Closed)
                 val scope = rememberCoroutineScope()
                 val navController = rememberNavController()
+                val error = viewModel.error.collectAsState()
+                val less = viewModel.less.collectAsState()
                 viewModel.getVehicles()
                 viewModel.getPlanets()
                 viewModel.getToken()
-
-
-
                 ModalNavigationDrawer(
                     drawerState = drawerState,
                     drawerContent = {
@@ -75,13 +80,22 @@ class MainActivity : ComponentActivity() {
                 scrimColor = MaterialTheme.colorScheme.surfaceColorAtElevation(2.dp),
                 content = {
                     Scaffold(
+                        snackbarHost = { SnackbarHost(snackbarHostState) },
                         content = {
                                 innerpadding->
-//                            Greeting(name = "Hello world ${planetlist.value.toString()} " + "\n" +
-//                                    "${vehiclelist.value.toString()}  " + "\n" +
-//                                    "${token.value}",
-//                                modifier =Modifier.padding(innerpadding) )
-                            VehicleScreen(innerpadding,viewModel,navController)
+                            KingNavHost(navController,viewModel,innerpadding)
+                            if (error.value){
+                                LaunchedEffect(key1 = snackbarHostState ){
+                                    snackbarHostState.showSnackbar("You Can't add more than 4 Items Kindly \n " +
+                                            "Change old values to Select to add new values")
+                                }
+                            }
+                            if (less.value){
+                                LaunchedEffect(key1 = snackbarHostState ){
+                                    snackbarHostState.showSnackbar("You Should add 4 Items")
+                                }
+
+                            }
 
                         },
                         modifier = Modifier.fillMaxSize(),
@@ -91,7 +105,7 @@ class MainActivity : ComponentActivity() {
                                 scrollBehavior= scrollviewBehavior,
                                 title = {
                                     Text(
-                                        "King Shan",
+                                        "Finding Falcone",
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis
                                     )
@@ -116,93 +130,109 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
 
+                        },
+                        bottomBar = {
+                          Column(modifier = Modifier
+                              .fillMaxWidth()
+                              .background(Color.Cyan)) {
+                              Text(text = "Bottom Bar", textAlign = TextAlign.Center
+                                  , modifier = Modifier.fillMaxWidth())
+                          }
+
+                            
                         }
                     )
                 }
                 )
-
             }
         }
     }
 }
 
+
+@Composable
+fun KingNavHost(
+    navController: NavHostController,
+    viewModel: MainViewModel,
+    innerpadding:PaddingValues,
+) {
+
+    NavHost(navController = navController, startDestination = "kingshanmain"
+        , modifier = Modifier.semantics { testTag = "start" },){
+
+        composable("kingshanmain"){
+            VehicleScreen(innerpadding,viewModel) { viewModel.find(navController) }
+        }
+        composable("kingshanwin"){
+            KingShanWin(viewModel,innerpadding){
+                viewModel.timetaken.value = 0
+                navController.navigate("kingshanmain") {
+                    popUpTo("kingshanmain")
+                }
+            }
+        }
+        composable("kingshanfail"){
+            KingShanFail(viewModel,innerpadding){
+                viewModel.timetaken.value = 0
+                navController.navigate("kingshanmain") {
+                    popUpTo("kingshanmain")
+                }
+            }
+        }
+    }
+
+}
+
+
+@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
 fun VehicleScreen(
     paddingValues: PaddingValues,
-    viewModel: MainViewModel ,
-    navController: NavHostController
+    viewModel: MainViewModel,
+    onNavigate : ()->Unit,
 ) {
 
     val loading by viewModel.loading.collectAsState()
     if (loading) ProgressBars(true) else ProgressBars(false)
     val planetlist = viewModel.planetState.collectAsState()
     val vehiclelist = viewModel.vehicleState.collectAsState()
-    val token = viewModel.token.collectAsState()
-    var vehicleList by remember{
+    val timetaken = viewModel.timetaken.collectAsState()
+    val vehicleList by remember{
         mutableStateOf(vehiclelist)
     }
 
-
-
-    var submit by remember { mutableStateOf(false) }
-    var findRequest by remember {
-        mutableStateOf(FindRequest("", emptyList(), emptyList()))
-    }
-    val myData = viewModel.vehiclelistState.collectAsState()
-    val planetData = viewModel.planetlistState.collectAsState()
-//    by remember {
-//        mutableStateOf(mutableListOf(MyData(0,0,"Select")))
-//    }
-
+    
     Column(modifier = Modifier.padding(paddingValues)) {
+
+
+
+
+
 
 
         val listState = rememberLazyListState()
         LazyColumn(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp), state = listState,
             modifier = Modifier.padding(10.dp)) {
-
-
-
-
-
             itemsIndexed(planetlist.value) { index,planetItem ->
-
-
-
-
-
-
                  VehicleCard(
-                    navController,
                     planetItem,
                     vehicleList,
                      index,
                      viewModel
-
                 )
             }
 
         }
-        Button(onClick = { submit = true }, modifier = Modifier.align(Alignment.CenterHorizontally)) {
-            Text(text = "Submit")
+        Button(onClick = { onNavigate()},
+            modifier = Modifier
+                .align(Alignment.CenterHorizontally)
+                .defaultMinSize(150.dp)) {
+            Column() {
+                Text(text = "Submit")
+                Text(text="Time Take : ${timetaken.value.toString()}")
+            }
         }
-
     }
 
-}
-
-@Composable
-fun Greeting(name: String,modifier: Modifier) {
-    Text(text = "Hello $name!", modifier = modifier
-        .background(Color.Green)
-        .fillMaxWidth())
-}
-
-@Preview(showBackground = true)
-@Composable
-fun DefaultPreview() {
-    KingShanTheme {
-        Greeting("Android", modifier = Modifier)
-    }
 }

@@ -1,5 +1,8 @@
 package com.nads.kingshan.data.model
 
-data class FindResponse(val planet_name:String?,
+import com.google.gson.annotations.SerializedName
+
+data class FindResponse(@SerializedName("planet_name")
+                        val planetName:String?,
                         val status:String?,
-                        val error:String?)
+                        val error:Boolean?)
